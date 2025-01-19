@@ -9,6 +9,7 @@
 	qwSyscallAddress QWORD 0000h
 .code 
 
+
 	GetPeb PROC
 		; rcx holds the offset (e.g., 0x60)
 		push rbx
