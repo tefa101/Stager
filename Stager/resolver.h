@@ -121,3 +121,13 @@ SYS_FUNC sys_func = { 0 };
 
 #define SET_SYSCALL(SYSCALL)(RedroGates((DWORD)SYSCALL.dwSSN,(PVOID)SYSCALL.pSyscallAddress))
 
+// -------------------------------- //// -------------------------------- //// -------------------------------- //
+BOOL ChekDebug() {
+    PPEB pPeb = GetPeb(PEP_OFFSET_FAKE * 0x2);
+
+    if (pPeb->BeingDebugged != 0) {
+        return FALSE;
+    }
+}
+
+// -------------------------------- //// -------------------------------- //// -------------------------------- //
