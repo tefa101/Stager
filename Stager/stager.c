@@ -240,7 +240,7 @@ BOOL InitSyscakk() {
 		return FALSE;
 	}
 	if (ChekDebug()) {
-		return -1;
+		return FALSE;
 	}
 	if (!FitchNtSyscall(NtCloseHash, &sys_func.NtClose)) {
 		////printf("failed to  initialize ntclose \n ");
